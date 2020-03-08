@@ -24,13 +24,22 @@ func main() {
 }
 
 func listMoviesHttpWrapper(writer http.ResponseWriter, request *http.Request) {
+	log.Println("Recieving list-request")
+	log.Println(request.URL)
+	log.Println(request.Header)
+	log.Println(request.Body)
 	movies := service.ListMovies()
 	marshal, err := json.MarshalIndent(movies, "", "  ")
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	if err == nil {
 		writer.Write(marshal)
 	} else {
 		writer.Write([]byte(fmt.Sprintf("marshalling failed: %v", err)))
 	}
+
+	log.Println("Sending list-response")
+	log.Println(writer.Header())
+	log.Println(movies)
 }
 
 func voteMoviesHttpWrapper(writer http.ResponseWriter, request *http.Request) {
@@ -39,7 +48,7 @@ func voteMoviesHttpWrapper(writer http.ResponseWriter, request *http.Request) {
 			QUERY_PARAM_ID, QUERY_PARAM_VOTERNAME, request.URL.Query().Encode())))
 		return
 	}
-	queryId,_ := strconv.Atoi(request.URL.Query()[QUERY_PARAM_ID][0])
+	queryId, _ := strconv.Atoi(request.URL.Query()[QUERY_PARAM_ID][0])
 	queryVoterName := request.URL.Query()[QUERY_PARAM_VOTERNAME][0]
 	err := service.VoteForMovie(queryId, queryVoterName)
 	if err == nil {
