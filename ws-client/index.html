@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link href="./style.css"
+          type="text/css"
+          rel="stylesheet">
+</head>
+<body>
+
+<h1>Welcome to my movie-vote-system</h1>
+
+<h2>The movies to vote for are</h2>
+<table style="width:100%" id="MovieTable">
+    <tr>
+        <th>Film title</th>
+        <th>Number of votes</th>
+        <th>vote</th>
+    </tr>
+    <tr>
+        <td>123</td>
+        <td>0</td>
+        <td><input type="checkbox" name="name5" /></td>
+    </tr>
+    <tr>
+        <td>123</td>
+        <td>0</td>
+        <td><input type="checkbox" name="name5" /></td>
+    </tr>
+    <tr>
+        <td>123</td>
+        <td>0</td>
+        <td><input type="checkbox" name="name5" /></td>
+    </tr>
+    <tr>
+        <td>123</td>
+        <td>0</td>
+        <td><input type="checkbox" name="name5" /></td>
+    </tr>
+</table>
+<script>
+    const xhr = new XMLHttpRequest()
+    const listUrl = 'http://localhost:8080/movies/list'
+    xhr.open("GET", listUrl)
+    xhr.withCredentials = false
+    xhr.timeout = 500
+    // xhr.send()
+    xhr.onerror = ev => {
+        console.log("list movies failed with error %d, %s", xhr.status, xhr.statusText)
+    }
+    xhr.ontimeout = ev => {
+        console.log("list movies timed out with error %d, %s", xhr.status, xhr.statusText)
+    }
+    xhr.onload = ev => {
+        console.log("%d %s loaded movies %o", xhr.status, xhr.statusText, xhr.responseText)
+        let body = JSON.parse(xhr.responseText);
+        for (var index = 0; index < body.length; index++) {
+            let bodyElement = body[index];
+            let tableRow = "<tr><td>" + bodyElement["Title"] + "</td><td>" + bodyElement["NumVotes"] + "</td></tr>";
+            document.getElementById("MovieTable").innerHTML += tableRow
+        }
+    }
+</script>
+
+<h2>Vote for your movie here</h2>
+<input type="text" value="Enter your name"/>
+<button type="button" Id="sendButton">post vote</button>
+<script>
+</script>
+
+</body>
+</html>
