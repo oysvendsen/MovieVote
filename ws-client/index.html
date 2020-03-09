@@ -6,6 +6,125 @@
     <link href="./style.css"
           type="text/css"
           rel="stylesheet">
+    <script>
+        var listOfMovies = new Array(0)
+
+        function fillMovieTable() {
+            console.log("Fill html-table")
+            const movieTableId = "MovieTable";
+            const idKey = "Id";
+            const titleKey = "Title";
+            const numVotesKey = "NumVotes";
+            let movieTableElement = document.getElementById(movieTableId);
+            movieTableElement.innerHTML = generateMovieTableHeader("Id", "Film title", "Number of votes", "Vote")
+            for (var index = 0; index < listOfMovies.length; index++) {
+                let movie = listOfMovies[index];
+                let tableRow = "<tr><td>" + movie[idKey] + "</td><td>" + movie[titleKey] + "</td><td>" + movie[numVotesKey] + "</td><td><input type='checkbox'/></td></tr>";
+                document.getElementById(movieTableId).innerHTML += tableRow
+            }
+        }
+
+        function generateMovieTableHeader() {
+            var movieTableHeader = "<tr>";
+            for (let i = 0; i < arguments.length; i++) {
+                movieTableHeader += "<th>"+arguments[i]+"</th>"
+            }
+            return movieTableHeader + "</tr>";
+        }
+
+        function gatherMovieIdFromDocument() {
+            console.log("gather movie id from document")
+            const movieTableElementId = "MovieTable";
+            const columnHeaderId = "Id"
+            const columnHeaderVote = "Vote"
+            var movieId = null
+            var movieTable = document.getElementById(movieTableElementId);
+            var numberOfRows = movieTable.childElementCount
+
+            //Find indeces from header row
+            var indexOfColumnWithMovieId = null
+            var indexOfColumnWithCheckBox = null
+            var headerRow = movieTable.children[0].firstChild
+            headerRow.childNodes.forEach((value, key) => {
+                if (value.innerHTML === columnHeaderId) {
+                    indexOfColumnWithMovieId = key
+                } else if (value.innerHTML === columnHeaderVote) {
+                    indexOfColumnWithCheckBox = key
+                }
+            })
+            if (indexOfColumnWithMovieId == null || indexOfColumnWithCheckBox == null) {
+                console.log("Error: could not find indeces of columns for movieId and checkbox")
+                return
+            }
+            //Loop through rows for first checked box
+            for (let i = 1; i < numberOfRows; i++) {
+                var row = movieTable.children[i].firstChild //look past <tbody>
+                if (row.childNodes[indexOfColumnWithCheckBox].firstChild.checked) {
+                    movieId = parseInt(row.childNodes[indexOfColumnWithMovieId].innerHTML)
+                    break
+                }
+            }
+            console.log("Found movie-id %s for first checked box", movieId)
+            return movieId
+        }
+
+        function gatherNameFromDocument() {
+            const defaultInputValue = "Enter your name".toUpperCase()
+            var name = null
+            var inputFieldElement = document.getElementById("nameInputField").value.toUpperCase();
+            if (inputFieldElement != defaultInputValue) {
+                name = inputFieldElement
+            }
+            return name;
+        }
+
+
+        function queryListApiAndRefreshTable() {
+            console.log("Querying list-api")
+            const xhr = new XMLHttpRequest()
+            const listUrl = 'http://localhost:8080/movies/list'
+
+            xhr.open("GET", listUrl)
+            xhr.withCredentials = false
+            xhr.timeout = 500
+            xhr.send()
+
+            xhr.onerror = ev => {
+                console.log("list movies failed with error %d, %s", xhr.status, xhr.statusText)
+            }
+            xhr.ontimeout = ev => {
+                console.log("list movies timed out with error %d, %s", xhr.status, xhr.statusText)
+            }
+            xhr.onload = ev => {
+                console.log("%d %s loaded movies %o", xhr.status, xhr.statusText, xhr.responseText)
+                listOfMovies = JSON.parse(xhr.responseText);
+                fillMovieTable()
+            }
+        }
+
+        function queryVoteApiAndRefreshTable(movieId, name) {
+            console.log("Querying vote-api")
+            const xhr = new XMLHttpRequest()
+            const voteUrl = 'http://localhost:8080/movies/vote?id=' + movieId + '&voterName=' + name
+
+            xhr.open("POST", voteUrl)
+            xhr.withCredentials = false
+            xhr.timeout = 500
+            xhr.send()
+
+            xhr.onerror = ev => {
+                console.log("vote movie failed with error %d, %s", xhr.status, xhr.statusText)
+            }
+            xhr.ontimeout = ev => {
+                console.log("vote movie timed out with error %d, %s", xhr.status, xhr.statusText)
+            }
+            xhr.onload = ev => {
+                console.log("%d %s voted movie with response %o", xhr.status, xhr.statusText, xhr.responseText)
+                queryListApiAndRefreshTable()
+            }
+        }
+
+    </script>
 </head>
 <body>
 
@@ -13,61 +132,28 @@
 
 <h2>The movies to vote for are</h2>
 <table style="width:100%" id="MovieTable">
-    <tr>
-        <th>Film title</th>
-        <th>Number of votes</th>
-        <th>vote</th>
-    </tr>
-    <tr>
-        <td>123</td>
-        <td>0</td>
-        <td><input type="checkbox" name="name5" /></td>
-    </tr>
-    <tr>
-        <td>123</td>
-        <td>0</td>
-        <td><input type="checkbox" name="name5" /></td>
-    </tr>
-    <tr>
-        <td>123</td>
-        <td>0</td>
-        <td><input type="checkbox" name="name5" /></td>
-    </tr>
-    <tr>
-        <td>123</td>
-        <td>0</td>
-        <td><input type="checkbox" name="name5" /></td>
-    </tr>
 </table>
 <script>
-    const xhr = new XMLHttpRequest()
-    const listUrl = 'http://localhost:8080/movies/list'
-    xhr.open("GET", listUrl)
-    xhr.withCredentials = false
-    xhr.timeout = 500
-    // xhr.send()
-    xhr.onerror = ev => {
-        console.log("list movies failed with error %d, %s", xhr.status, xhr.statusText)
-    }
-    xhr.ontimeout = ev => {
-        console.log("list movies timed out with error %d, %s", xhr.status, xhr.statusText)
-    }
-    xhr.onload = ev => {
-        console.log("%d %s loaded movies %o", xhr.status, xhr.statusText, xhr.responseText)
-        let body = JSON.parse(xhr.responseText);
-        for (var index = 0; index < body.length; index++) {
-            let bodyElement = body[index];
-            let tableRow = "<tr><td>" + bodyElement["Title"] + "</td><td>" + bodyElement["NumVotes"] + "</td></tr>";
-            document.getElementById("MovieTable").innerHTML += tableRow
+    queryListApiAndRefreshTable()
+</script>
+
+<h2>Vote for your movie here</h2>
+<input type="text" value="Enter your name" id="nameInputField"/>
+<button type="button" Id="sendButton" onclick="vote()">post vote</button>
+<script>
+    function vote() {
+        var movieId = gatherMovieIdFromDocument()
+        var name = gatherNameFromDocument()
+        if (movieId == null || name == null) {
+            console.log("Error: cannot vote with the following parameters: movieId=%d,name=%d", movieId, name)
+            document.getElementById("errorParagraphTag").innerHTML = "You need to provide a name and vote for a movie!"
+        } else {
+            queryVoteApiAndRefreshTable(movieId, name)
         }
     }
 </script>
 
-<h2>Vote for your movie here</h2>
-<input type="text" value="Enter your name"/>
-<button type="button" Id="sendButton">post vote</button>
-<script>
-</script>
+<p id="errorParagraphTag"></p>
 
 </body>
 </html>
