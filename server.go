@@ -50,6 +50,7 @@ func voteMoviesHttpWrapper(writer http.ResponseWriter, request *http.Request) {
 	}
 	queryId, _ := strconv.Atoi(request.URL.Query()[QUERY_PARAM_ID][0])
 	queryVoterName := request.URL.Query()[QUERY_PARAM_VOTERNAME][0]
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	err := service.VoteForMovie(queryId, queryVoterName)
 	if err == nil {
 		writer.Write([]byte(fmt.Sprintf("You just voted! :-)")))
