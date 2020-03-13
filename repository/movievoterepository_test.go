@@ -165,7 +165,6 @@ func Test_UpdateMovie_GivenMovieWithNonExistentId_UpdatesNothing(t *testing.T) {
 
 	repo.UpdateMovie(newMovie)
 
-
 	if movie := repo.FindMovieById(newMovie.Id); movie != nil {
 		t.Errorf("Movie %v is not supposed to be present", movie)
 	}
@@ -194,8 +193,8 @@ func assertVotes(t *testing.T, votes []vote.Vote, expectedVotes ...vote.Vote) {
 	}
 	for _, expectedVote := range expectedVotes {
 		var foundExpectedVote bool
-		for _, movie := range votes {
-			if expectedVote == movie {
+		for _, voteObject := range votes {
+			if expectedVote == voteObject {
 				foundExpectedVote = true
 				break
 			}
