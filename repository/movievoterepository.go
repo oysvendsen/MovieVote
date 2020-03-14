@@ -3,7 +3,20 @@ package repository
 import (
 	"MovieVote/domain/movie"
 	"MovieVote/domain/vote"
+	"errors"
+	"io/ioutil"
+	"log"
+	"strings"
 )
+
+type MovieVoteRepository interface {
+	ListMovies() []movie.Movie
+	FindMovieById(id int) *movie.Movie
+	FindVoteByVoterName(name string) *vote.Vote
+	CreateVote(v vote.Vote)
+	UpdateMovie(updatedMovie movie.Movie)
+	VoterExist(name string) bool
+}
 
 type MovieVoteRepositoryInMemoryImpl struct {
 	movies []movie.Movie
@@ -77,6 +90,29 @@ func WithMovies() MovieVoteRepositoryInMemoryImpl {
 	movies = append(movies, movie.New(1, "Stargate"))
 	movies = append(movies, movie.New(2, "Sharknado"))
 	movies = append(movies, movie.New(3, "Indiana Jones and Raiders of the Lost Ark"))
+
+	return MovieVoteRepositoryInMemoryImpl{
+		movies: movies,
+		votes:  nil,
+	}
+}
+
+func FromFile(filename string) MovieVoteRepositoryInMemoryImpl {
+	var movies []movie.Movie
+
+	file, err := ioutil.ReadFile(filename)
+	if err != nil {
+		panic(errors.New("Cannot read file"))
+	}
+
+	fileAsString := string(file)
+	fileAsStringLinuxLineEndings := strings.ReplaceAll(fileAsString, "\r\n", "\n")
+	fileAsLineArray := strings.Split(fileAsStringLinuxLineEndings, "\n")
+	for index, movieTitle := range fileAsLineArray {
+		m := movie.New(index, movieTitle)
+		log.Printf("movie %d: %v - %v", index, movieTitle, m)
+		movies = append(movies, m)
+	}
 
 	return MovieVoteRepositoryInMemoryImpl{
 		movies: movies,

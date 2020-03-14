@@ -10,8 +10,8 @@ import (
 
 var repo repository.MovieVoteRepositoryInMemoryImpl
 
-func Init() {
-	repo = repository.WithMovies()
+func Init(filename string) {
+	repo = repository.FromFile(filename)
 }
 
 func ListMovies() []movie.Movie {

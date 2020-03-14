@@ -20,7 +20,7 @@ func main() {
 	} else {
 		log.Printf("Starting server on port %v", port)
 	}
-	service.Init()
+	service.Init("movies.txt")
 	//http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) { writer.Write([]byte("Hello World")) })
 	http.Handle("/", http.FileServer(http.Dir("./ws-client")))
 	http.HandleFunc("/movies/list", listMoviesHttpWrapper)

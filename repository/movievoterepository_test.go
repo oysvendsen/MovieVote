@@ -34,6 +34,27 @@ func Test_RepositoryWithMovies(t *testing.T) {
 		})
 }
 
+
+func Test_RepositoryFromFile(t *testing.T) {
+	filled := repository.FromFile("test_movies.txt")
+	assertMovies(t, filled.ListMovies(),
+		movie.Movie{
+			Id:       0,
+			Title:    "Avengers Endgame",
+			NumVotes: 0,
+		},
+		movie.Movie{
+			Id:       1,
+			Title:    "Captain Marvel",
+			NumVotes: 0,
+		},
+		movie.Movie{
+			Id:       2,
+			Title:    "Iron Man",
+			NumVotes: 0,
+		})
+}
+
 func Test_RepositoryWithTestData(t *testing.T) {
 	filled := repository.WithTestData()
 	assertMovies(t, filled.ListMovies(),

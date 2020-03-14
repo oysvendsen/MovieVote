@@ -7,6 +7,12 @@ import (
 	"testing"
 )
 
+func Test_fromFile(t *testing.T) {
+	repo = repository.FromFile("../repository/test_movies.txt")
+	movies := ListMovies()
+	assertMoviesContainTitles(t, movies, "Avengers Endgame", "Captain Marvel", "Iron Man")
+}
+
 func Test_list(t *testing.T) {
 	repo = repository.WithTestData()
 	movies := ListMovies()
