@@ -6,8 +6,15 @@
     <link href="./style.css"
           type="text/css"
           rel="stylesheet">
+    <style>
+        #errorParagraphTag { color: red }
+    </style>
     <script>
+        const TIMEOUT = 1000;
         var listOfMovies = new Array(0)
+        const baseBackendUrl = "https://shielded-tundra-14123.herokuapp.com"
+        //const baseBackendUrl = "http://localhost:8080"
+        //const baseBackendUrl = "http://localhost:5000"
 
         function fillMovieTable() {
             console.log("Fill html-table")
@@ -69,24 +76,26 @@
         }
 
         function gatherNameFromDocument() {
-            const defaultInputValue = "Enter your name".toUpperCase()
             var name = null
-            var inputFieldElement = document.getElementById("nameInputField").value.toUpperCase();
-            if (inputFieldElement != defaultInputValue) {
+            var inputFieldElement = document.getElementById("nameInputField").value;
+            if (inputFieldElement != "") {
                 name = inputFieldElement
             }
             return name;
         }
 
+        function notify(errorMessage) {
+            document.getElementById("errorParagraphTag").innerHTML = errorMessage
+        }
 
         function queryListApiAndRefreshTable() {
             console.log("Querying list-api")
             const xhr = new XMLHttpRequest()
-            const listUrl = 'http://localhost:8080/movies/list'
+            const listUrl = baseBackendUrl + '/movies/list'
 
             xhr.open("GET", listUrl)
             xhr.withCredentials = false
-            xhr.timeout = 500
+            xhr.timeout = TIMEOUT
             xhr.send()
 
             xhr.onerror = ev => {
@@ -105,21 +114,23 @@
         function queryVoteApiAndRefreshTable(movieId, name) {
             console.log("Querying vote-api")
             const xhr = new XMLHttpRequest()
-            const voteUrl = 'http://localhost:8080/movies/vote?id=' + movieId + '&voterName=' + name
+            const voteUrl = baseBackendUrl + '/movies/vote?id=' + movieId + '&voterName=' + name
 
             xhr.open("POST", voteUrl)
             xhr.withCredentials = false
-            xhr.timeout = 500
+            xhr.timeout = TIMEOUT
             xhr.send()
 
             xhr.onerror = ev => {
                 console.log("vote movie failed with error %d, %s", xhr.status, xhr.statusText)
+                notify(xhr.statusText)
             }
             xhr.ontimeout = ev => {
                 console.log("vote movie timed out with error %d, %s", xhr.status, xhr.statusText)
             }
             xhr.onload = ev => {
                 console.log("%d %s voted movie with response %o", xhr.status, xhr.statusText, xhr.responseText)
+                notify(xhr.responseText)
                 queryListApiAndRefreshTable()
             }
         }
@@ -134,11 +145,12 @@
 <table style="width:100%" id="MovieTable">
 </table>
 <script>
+    fillMovieTable()
     queryListApiAndRefreshTable()
 </script>
 
 <h2>Vote for your movie here</h2>
-<input type="text" value="Enter your name" id="nameInputField"/>
+<input type="text" value="" id="nameInputField"/>
 <button type="button" Id="sendButton" onclick="vote()">post vote</button>
 <script>
     function vote() {
@@ -146,7 +158,7 @@
         var name = gatherNameFromDocument()
         if (movieId == null || name == null) {
             console.log("Error: cannot vote with the following parameters: movieId=%d,name=%d", movieId, name)
-            document.getElementById("errorParagraphTag").innerHTML = "You need to provide a name and vote for a movie!"
+            notify("You need to provide a name and vote for a movie!")
         } else {
             queryVoteApiAndRefreshTable(movieId, name)
         }
