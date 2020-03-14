@@ -21,8 +21,8 @@ func main() {
 		log.Printf("Starting server on port %v", port)
 	}
 	service.Init()
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) { writer.Write([]byte("Hello World")) })
-	//http.Handle("/", http.FileServer(http.Dir("./ws-client")))
+	//http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) { writer.Write([]byte("Hello World")) })
+	http.Handle("/", http.FileServer(http.Dir("./ws-client")))
 	http.HandleFunc("/movies/list", listMoviesHttpWrapper)
 	http.HandleFunc("/movies/vote", voteMoviesHttpWrapper)
 	log.Fatal(http.ListenAndServe(":" + port, nil))
