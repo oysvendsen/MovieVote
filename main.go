@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 )
 
@@ -13,7 +14,12 @@ const QUERY_PARAM_VOTERNAME = "voterName"
 const QUERY_PARAM_ID = "id"
 
 func main() {
-	log.Print("Starting server")
+	port := os.Getenv("PORT")
+	if port == "" {
+		panic("$PORT must be provided")
+	} else {
+		log.Printf("Starting server on port %v", port)
+	}
 	service.Init()
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) { writer.Write([]byte("Hello World")) })
 	//http.Handle("/", http.FileServer(http.Dir("./ws-client")))
