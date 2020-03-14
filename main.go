@@ -25,7 +25,7 @@ func main() {
 	//http.Handle("/", http.FileServer(http.Dir("./ws-client")))
 	http.HandleFunc("/movies/list", listMoviesHttpWrapper)
 	http.HandleFunc("/movies/vote", voteMoviesHttpWrapper)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":" + port, nil))
 }
 
 func listMoviesHttpWrapper(writer http.ResponseWriter, request *http.Request) {
