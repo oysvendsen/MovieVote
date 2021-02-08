@@ -1,2 +1,3 @@
 MovieVote.exe
 .idea/*
+/docker/docker.out

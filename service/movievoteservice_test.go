@@ -1,8 +1,8 @@
 package service
 
 import (
-	"MovieVote/domain/movie"
-	"MovieVote/repository"
+	"github.com/theknight1509/MovieVote/domain/movie"
+	"github.com/theknight1509/MovieVote/repository"
 	"strconv"
 	"testing"
 )

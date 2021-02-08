@@ -1,85 +1,83 @@
 package main
 
 import (
-	"MovieVote/service"
 	"encoding/json"
 	"fmt"
+	"github.com/theknight1509/MovieVote/service"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 )
 
 const QUERY_PARAM_VOTERNAME = "voterName"
 const QUERY_PARAM_ID = "id"
 
+type MovieVoteRequestHandler struct{}
+
+func (handler MovieVoteRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	log.Println(fmt.Sprintf("Serving %s %s from %s", r.Method, r.URL.Path, r.RemoteAddr))
+	listMoviesRegexp, _ := regexp.Compile("^/movies$")
+	readMovieRegexp, _ := regexp.Compile("^/movies/([0-9a-zA-Z]+)$")
+	voteMovieRegexp, _ := regexp.Compile("^/movies/(.+)/vote$")
+	switch {
+	case (r.Method == "GET") && listMoviesRegexp.Match([]byte(r.URL.Path)):
+		movies := service.ListMovies()
+		marshal, err := json.Marshal(movies)
+		if err == nil {
+			w.Write(marshal)
+		} else {
+			w.WriteHeader(500)
+			log.Println(err.Error())
+			w.Write([]byte(err.Error()))
+		}
+	case (r.Method == "GET") && readMovieRegexp.Match([]byte(r.URL.Path)):
+		movieId := readMovieRegexp.FindStringSubmatch(r.URL.Path)[1]
+		w.Write([]byte(movieId))
+	case (r.Method == "POST") && voteMovieRegexp.Match([]byte(r.URL.Path)):
+		movieId := voteMovieRegexp.FindStringSubmatch(r.URL.Path)[1]
+		movieIdAsInt, err := strconv.Atoi(movieId)
+		if err != nil {
+			w.WriteHeader(400)
+			w.Write([]byte("InputError - invalid movieId " + movieId))
+			return
+		}
+
+		var body map[string]interface{}
+		err = json.NewDecoder(r.Body).Decode(&body)
+		voterName, exists := body["voterName"].(string)
+		if err != nil {
+			w.WriteHeader(400)
+			w.Write([]byte(fmt.Sprintf("InputError - invalid request %v", body)))
+			return
+		}
+		if !exists {
+			w.WriteHeader(400)
+			w.Write([]byte("InputError - invalid voterName"))
+			return
+		}
+
+		err = service.VoteForMovie(movieIdAsInt, voterName)
+		if err != nil {
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
+		} else {
+			w.WriteHeader(201)
+		}
+	default:
+		w.WriteHeader(404)
+	}
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		panic("$PORT must be provided")
-	} else {
-		log.Printf("Starting server on port %v", port)
+		port = "8080"
 	}
+	log.Printf("Starting server on port %v", port)
 	service.Init("movies.txt")
-	//http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) { writer.Write([]byte("Hello World")) })
 	http.Handle("/", http.FileServer(http.Dir("./ws-client")))
-	http.HandleFunc("/movies/list", listMoviesHttpWrapper)
-	http.HandleFunc("/movies/vote", voteMoviesHttpWrapper)
-	log.Fatal(http.ListenAndServe(":" + port, nil))
-}
-
-func listMoviesHttpWrapper(writer http.ResponseWriter, request *http.Request) {
-	log.Println("Recieving list-request")
-	log.Println(request.URL)
-	log.Println(request.Header)
-	log.Println(request.Body)
-	movies := service.ListMovies()
-	marshal, err := json.MarshalIndent(movies, "", "  ")
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	if err == nil {
-		writer.Write(marshal)
-	} else {
-		writer.Write([]byte(fmt.Sprintf("marshalling failed: %v", err)))
-	}
-
-	log.Println("Sending list-response")
-	log.Println(writer.Header())
-	log.Println(movies)
-}
-
-func voteMoviesHttpWrapper(writer http.ResponseWriter, request *http.Request) {
-	if !validVoteQuery(*request) {
-		writer.Write([]byte(fmt.Sprintf("Well this went to hell didn't it! Required params are '%v' and '%v'! Query is %v",
-			QUERY_PARAM_ID, QUERY_PARAM_VOTERNAME, request.URL.Query().Encode())))
-		return
-	}
-	queryId, _ := strconv.Atoi(request.URL.Query()[QUERY_PARAM_ID][0])
-	queryVoterName := request.URL.Query()[QUERY_PARAM_VOTERNAME][0]
-	writer.Header().Set("Access-Control-Allow-Origin", "*")
-	err := service.VoteForMovie(queryId, queryVoterName)
-	if err == nil {
-		writer.Write([]byte(fmt.Sprintf("You just voted! :-)")))
-	} else {
-		writer.WriteHeader(500)
-		writer.Write([]byte(err.Error()))
-	}
-}
-
-func validVoteQuery(request http.Request) bool {
-	query := request.URL.Query()
-	if query.Get(QUERY_PARAM_ID) == "" {
-		return false
-	} else {
-		if len(query[QUERY_PARAM_ID]) != 1 {
-			return false
-		}
-	}
-	if query.Get(QUERY_PARAM_VOTERNAME) == "" {
-		return false
-	} else {
-		if len(query[QUERY_PARAM_VOTERNAME]) != 1 {
-			return false
-		}
-	}
-	return true
+	handler := MovieVoteRequestHandler{}
+	log.Fatal(http.ListenAndServe(":"+port, handler))
 }

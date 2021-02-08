@@ -1,0 +1,7 @@
+version: "3.9"
+services:
+  movievote:
+    build: .
+    image: brynhildsvoll.net/movievote:0.1
+    ports:
+      - "8080:8080"
