@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/theknight1509/MovieVote/api/encrypt"
 	"github.com/theknight1509/MovieVote/service"
 	"log"
 	"net/http"
@@ -70,11 +71,12 @@ func (handler MovieVoteRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 }
 
-func orPanic(regexp *regexp.Regexp, err error) *regexp.Regexp {
+func regexpOrPanic(expr string) *regexp.Regexp {
+	compile, err := regexp.Compile(expr)
 	if err != nil {
 		panic(err)
 	}
-	return regexp
+	return compile
 }
 
 type Endpoint struct {
@@ -86,9 +88,10 @@ type Endpoint struct {
 func GetPublicKeyEndpoint() Endpoint {
 	return Endpoint{
 		method: "GET",
-		uri:     *orPanic(regexp.Compile("api/encryption/public")),
+		uri:     *regexpOrPanic("api/encryption/public"),
 		handler: func(w http.ResponseWriter, r *http.Request) {
-
+			w.WriteHeader(200)
+			w.Write([]byte(encrypt.GlobalInstance.EncodePub()))
 		},
 	}
 }

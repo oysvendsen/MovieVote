@@ -12,6 +12,16 @@ type Encryption struct {
 	encodedPublicKey string
 }
 
+var GlobalInstance Encryption = NewOrPanic()
+
+func NewOrPanic() Encryption {
+	encryption, err := New()
+	if err != nil {
+		panic(err)
+	}
+	return encryption
+}
+
 func New() (Encryption, error) {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
@@ -27,7 +37,7 @@ func New() (Encryption, error) {
 	}, nil
 }
 
-func (e Encryption) encodePub() string {
+func (e Encryption) EncodePub() string {
 	return e.encodedPublicKey
 }
 
