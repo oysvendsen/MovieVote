@@ -70,6 +70,47 @@ func (handler MovieVoteRequestHandler) ServeHTTP(w http.ResponseWriter, r *http.
 	}
 }
 
+func orPanic(regexp *regexp.Regexp, err error) *regexp.Regexp {
+	if err != nil {
+		panic(err)
+	}
+	return regexp
+}
+
+type Endpoint struct {
+	method string
+	uri regexp.Regexp
+	handler http.HandlerFunc
+}
+
+func GetPublicKeyEndpoint() Endpoint {
+	return Endpoint{
+		method: "GET",
+		uri:     *orPanic(regexp.Compile("api/encryption/public")),
+		handler: func(w http.ResponseWriter, r *http.Request) {
+
+		},
+	}
+}
+
+type RestHandler struct {
+	endpoints []Endpoint
+}
+
+func (h RestHandler) addEndpoints() RestHandler {
+	h.endpoints = append(h.endpoints, GetPublicKeyEndpoint())
+	return h
+}
+
+func (rh RestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)  {
+	for _, endpoint := range rh.endpoints {
+		if endpoint.method == r.Method && endpoint.uri.MatchString(r.URL.Path) {
+			endpoint.handler.ServeHTTP(w,r)
+			return
+		}
+	}
+}
+
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -78,6 +119,5 @@ func main() {
 	log.Printf("Starting server on port %v", port)
 	service.Init("movies.txt")
 	http.Handle("/", http.FileServer(http.Dir("./ws-client")))
-	handler := MovieVoteRequestHandler{}
-	log.Fatal(http.ListenAndServe(":"+port, handler))
+	log.Fatal(http.ListenAndServe(":"+port, new(RestHandler).addEndpoints()))
 }
