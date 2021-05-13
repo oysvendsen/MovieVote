@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/theknight1509/MovieVote/domain/movie"
+	"github.com/theknight1509/MovieVote/api/movie"
 	"io/ioutil"
 	"net/http"
 	"strconv"

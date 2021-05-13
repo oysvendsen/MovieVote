@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/theknight1509/MovieVote/domain/movie"
-	"github.com/theknight1509/MovieVote/domain/vote"
+	"github.com/theknight1509/MovieVote/api/movie"
+	"github.com/theknight1509/MovieVote/api/vote"
 	"github.com/theknight1509/MovieVote/repository"
 	"errors"
 	"fmt"
@@ -12,7 +12,7 @@ var repo repository.MovieVoteRepositoryInMemoryImpl
 
 func Init(filename string) {
 	repo = repository.WithMovies()
-	fmt.Println("Initializing repository with defualt entries")
+	fmt.Println("Initializing repository with default entries")
 }
 
 func ListMovies() []movie.Movie {

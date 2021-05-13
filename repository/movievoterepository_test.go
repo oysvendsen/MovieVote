@@ -1,8 +1,8 @@
 package repository_test
 
 import (
-	"github.com/theknight1509/MovieVote/domain/movie"
-	"github.com/theknight1509/MovieVote/domain/vote"
+	"github.com/theknight1509/MovieVote/api/movie"
+	"github.com/theknight1509/MovieVote/api/vote"
 	"github.com/theknight1509/MovieVote/repository"
 	"testing"
 )
