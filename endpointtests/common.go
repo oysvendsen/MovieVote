@@ -1,6 +1,7 @@
 package endpointtests
 
 import (
+	"bytes"
 	"io"
 	"net/http"
 	"testing"
@@ -8,6 +9,13 @@ import (
 
 func httpGetRequest(t *testing.T, url string) *http.Response {
 	get, err := http.Get(url)
+	if err != nil {
+		t.Fatalf("Request failed with technical error %s", err.Error())
+	}
+	return get
+}
+func httpPostRequest(t *testing.T, url string, body []byte) *http.Response {
+	get, err := http.Post(url, "text", bytes.NewReader(body))
 	if err != nil {
 		t.Fatalf("Request failed with technical error %s", err.Error())
 	}

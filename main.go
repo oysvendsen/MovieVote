@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/theknight1509/MovieVote/api/encrypt"
 	"github.com/theknight1509/MovieVote/service"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -79,6 +80,21 @@ func regexpOrPanic(expr string) *regexp.Regexp {
 	return compile
 }
 
+/*
+func ifErrWriteError(w http.ResponseWriter, err error, optionalErrorMessage string) bool{
+	if err != nil {
+		w.WriteHeader(500)
+		if len(optionalErrorMessage) > 0 {
+			w.Write([]byte(optionalErrorMessage))
+		} else {
+			w.Write([]byte(err.Error()))
+		}
+		return true
+	}
+	return false
+}
+*/
+
 type Endpoint struct {
 	method string
 	uri regexp.Regexp
@@ -96,12 +112,37 @@ func GetPublicKeyEndpoint() Endpoint {
 	}
 }
 
+func GetEncryptionValidationEndpoint() Endpoint {
+	return Endpoint{
+		method: "POST",
+		uri:     *regexpOrPanic("api/encryption/validation"),
+		handler: func(w http.ResponseWriter, r *http.Request) {
+			defer r.Body.Close()
+			body, err := ioutil.ReadAll(r.Body)
+			if err != nil {
+				w.WriteHeader(500)
+				w.Write([]byte(err.Error())) //Are we exposing internals??
+				return
+			}
+			decrypt, err := encrypt.GlobalInstance.Decrypt(string(body))
+			if err != nil {
+				w.WriteHeader(500)
+				w.Write([]byte(err.Error())) //Are we exposing internals??
+				return
+			}
+			w.Write([]byte(decrypt))
+			w.WriteHeader(200)
+		},
+	}
+}
+
 type RestHandler struct {
 	endpoints []Endpoint
 }
 
 func (h RestHandler) addEndpoints() RestHandler {
 	h.endpoints = append(h.endpoints, GetPublicKeyEndpoint())
+	h.endpoints = append(h.endpoints, GetEncryptionValidationEndpoint())
 	return h
 }
 
@@ -112,6 +153,7 @@ func (rh RestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)  {
 			return
 		}
 	}
+	w.WriteHeader(404)
 }
 
 func main() {

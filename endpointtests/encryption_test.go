@@ -34,7 +34,7 @@ func TestDecryptValidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to encrypt secret; %s", err.Error())
 	}
-	request := httpGetRequest(t, "http://localhost:8080/api/encryption/validation?payload=" + encryptedSecret)
+	request := httpPostRequest(t, "http://localhost:8080/api/encryption/validation", []byte(encryptedSecret))
 	assertRequestIsOk(t, request)
 	body := readBody(t, request)
 
