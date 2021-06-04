@@ -14,12 +14,30 @@ func httpGetRequest(t *testing.T, url string) *http.Response {
 	}
 	return get
 }
+
+type RestHeader struct {
+	key string
+	value string
+}
+
 func httpPostRequest(t *testing.T, url string, body []byte) *http.Response {
-	get, err := http.Post(url, "text", bytes.NewReader(body))
+	return httpPostRequestWithHeader(t, url, body, []RestHeader{})
+}
+
+func httpPostRequestWithHeader(t *testing.T, url string, body []byte, restHeaders []RestHeader) *http.Response {
+	client := http.Client{}
+	request, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {
 		t.Fatalf("Request failed with technical error %s", err.Error())
 	}
-	return get
+	for _, header := range restHeaders {
+		request.Header.Add(header.key, header.value)
+	}
+	response, err2 := client.Do(request)
+	if err2 != nil {
+		t.Fatalf("Request failed with technical error %s", err2.Error())
+	}
+	return response
 }
 
 func assertRequestIsOk(t *testing.T, response *http.Response) {

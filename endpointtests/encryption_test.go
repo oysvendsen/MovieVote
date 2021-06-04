@@ -45,6 +45,38 @@ func TestDecryptValidation(t *testing.T) {
 	}
 }
 
+func TestDecryptValidationWithPubKeyInHeader(t *testing.T) {
+	secret := "hello world"
+	publicKeyBody := successfullyGetAndReadBody(t, publicKeyUrl)
+	encryption, err := encrypt.New()
+	if err != nil {
+		t.Fatalf("Failed to create Encryption struct; %s", err.Error())
+	}
+	encryptedSecret, err := encryption.Encrypt(secret, publicKeyBody)
+	if err != nil {
+		t.Fatalf("Failed to encrypt secret; %s", err.Error())
+	}
+	request := httpPostRequestWithHeader(t,
+		"http://localhost:8080/api/encryption/validation",
+		[]byte(encryptedSecret),
+		[]RestHeader{{
+			key:   "client-public-key",
+			value: encryption.EncodePub(),
+		}})
+	assertRequestIsOk(t, request)
+	body := readBody(t, request)
+	decryptedSecret, err := encryption.Decrypt(body)
+	if err != nil {
+		t.Fatalf("Failed to decrypt responsebody; %s", err.Error())
+	}
+
+	if decryptedSecret == secret {
+		t.Logf("Response from validation is same as encrypted payload")
+	} else {
+		t.Fatalf("Response from validation is not the original secret")
+	}
+}
+
 func successfullyGetAndReadBody(t *testing.T, url string) string {
 	request := httpGetRequest(t, publicKeyUrl)
 	assertRequestIsOk(t, request)

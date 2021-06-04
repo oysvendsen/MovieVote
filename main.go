@@ -121,8 +121,20 @@ func postEncryptionValidationEndpoint() Endpoint {
 				w.Write([]byte(err.Error())) //Are we exposing internals??
 				return
 			}
-			w.Write([]byte(decrypt))
-			w.WriteHeader(200)
+
+			if clientPublicKey := r.Header.Get("client-public-key"); clientPublicKey != "" {
+				encrypted, err := encrypt.GlobalInstance.Encrypt(decrypt, clientPublicKey)
+				if err != nil {
+					w.WriteHeader(500)
+					w.Write([]byte(err.Error())) //Are we exposing internals??
+					return
+				}
+				w.Write([]byte(encrypted))
+				w.WriteHeader(200)
+			} else {
+				w.Write([]byte(decrypt))
+				w.WriteHeader(200)
+			}
 		},
 	}
 }
