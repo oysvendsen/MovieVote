@@ -145,6 +145,7 @@ SERVER HANDLER FOR ALL ENDPOINTS
 
 type RestHandler struct {
 	endpoints []Endpoint
+	fileServerHandler http.Handler
 }
 
 func (h RestHandler) addEndpoints() RestHandler {
@@ -153,17 +154,20 @@ func (h RestHandler) addEndpoints() RestHandler {
 	h.endpoints = append(h.endpoints, listMoviesEndpoint())
 	h.endpoints = append(h.endpoints, readMoviesEndpoint())
 	h.endpoints = append(h.endpoints, postVoteEndpoint())
+	h.fileServerHandler = http.FileServer(http.Dir("./ws-client"))
 	return h
 }
 
 func (rh RestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request)  {
 	for _, endpoint := range rh.endpoints {
 		if endpoint.method == r.Method && endpoint.uri.MatchString(r.URL.Path) {
+            log.Printf("Found endpoint for url '%s'", r.URL.Path)
 			endpoint.handlerFunc.ServeHTTP(w,r)
 			return
 		}
 	}
-	w.WriteHeader(404)
+    log.Printf("Did not find endpoint for url '%s', leaving it to the fileServer.", r.URL.Path)
+	rh.fileServerHandler.ServeHTTP(w,r)
 }
 
 /*
@@ -187,6 +191,5 @@ func main() {
 	}
 	log.Printf("Starting server on port %v", port)
 	service.Init("movies.txt")
-	http.Handle("/", http.FileServer(http.Dir("./ws-client")))
 	log.Fatal(http.ListenAndServe(":"+port, new(RestHandler).addEndpoints()))
 }
